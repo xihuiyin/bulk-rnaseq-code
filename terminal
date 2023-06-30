@@ -1,0 +1,45 @@
+ssh -Y yinxihui@hoffman2.idre.ucla.edu
+qrsh –l h_data=4G,time=4:00:00
+
+chmod 777 MS_7RNA_S-21-0276_FAP121
+cd /u/scratch/y/yinxihui/MS_7RNA_S-21-0276_FAP121
+
+#dl fastqc
+https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
+wget <<link>>
+unzip fastqc_v0.11.4.zip
+
+mkdir qcreport
+chmod 777 fastqc
+./fastqc --outdir=qcreport /u/scratch/y/yinxihui/bulk/
+
+#if needed, trim bad reads with fastx
+
+#HISAT2 ALIGNMENT
+wget <<link>>
+unzip hisat2-2.1.0-Linux_x86_64.zip
+cd hisat2-2.1.0
+mkdir index
+cd index
+
+#mouse genome mm10 index
+wget https://urldefense.proofpoint.com/v2/url?u=ftp-3A__ftp.ccb.jhu.edu_pub_infphilo_hisat2_data_mm10.tar.gz&d=DwIGAg&c=UXmaowRpu5bLSLEQRunJ2z-YIUZuUoa9Rw_x449Hd_Y&r=N2KXp4uEFCKr1x1SU-bWJ8HB7S6vu4LfmkURhe_aNgQ&m=3i4xAI3KUa6WvOTcY0ydPTbeiptrXpSaaC9XsRSL3q8&s=ayKaS0sfQGqgu3ZPjTUC3ZQDE5P-knkQWQygJitxmj4&e= 
+tar -zxvf mm10.tar.gz
+
+#retrieve datasets
+vi hisat.job
+chmod +x hisat.job
+
+# -p 5 --> uses 5 processors
+# -t --> show time log
+# -no-unal --> Exclude unaligned reads from final output
+# -x --> Specify index file location and name
+# -U --> Specify fastq filename
+# -S --> Specify output filename in SAM format
+
+qsub -cwd -V -pe shared 5 -l h_data=1G,h_rt=4:00:00 -N hisat2_M -b y "/u/scratch/y/yinxihui/MS_7RNA_S-21-0276_FAP121/hisat2-2.1.0/hisat2 -p 5 -t --no-unal -x /u/scratch/y/yinxihui/MS_7RNA_S-21-0276_FAP121/hisat2-2.1.0/index/mm10/genome -U 10WT_S7_L001_R1_001.fastq.gz,10WT_S7_L001_R2_001.fastq.gz -S 10WT.sam"
+
+qsub hisat.job
+
+#export file by scp -r or globus or filezilla
+
